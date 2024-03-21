@@ -1,15 +1,26 @@
+"""
+This script publishes weather telemetry data from a CSV file to an MQTT broker.
+It utilizes the paho MQTT client for communication with the broker and protobuf for data serialization.
+"""
+
+# Import required libraries
 import generated.weather_telemetry_pb2 as weather_telemetry_pb2
 import paho.mqtt.client as mqtt
 import time
 import pandas as pd
 import sys
-import data
-HOST = "emqx"
-TOPIC = "topic/telemetry"
-PORT = 1883
-INTERVAL = 60*60  # This is used for an additional delay between messages.
+import os
+
+# MQTT broker configuration variables
+HOST = "emqx"  # The hostname or IP address of the MQTT broker
+TOPIC = "topic/telemetry"  # MQTT topic to publish the data to
+PORT = 1883  # Port number of the MQTT broker
+INTERVAL = int(os.getenv("INTERVAL"))  # Publishing interval (in seconds), retrieved from environment variables
 
 def on_connect(client, userdata, flags, rc, properties):
+    """
+    Callback for when the client receives a CONNACK response from the server.
+    """
     if rc == 0:
         print("Connected to MQTT Broker!")
     else:
@@ -18,11 +29,17 @@ def on_connect(client, userdata, flags, rc, properties):
         sys.exit(1)
 
 def on_disconnect(client, userdata, rc, properties,flags):
+    """
+    Callback for when the client disconnects from the broker.
+    """
     if rc != 0:  # If rc is 0, the disconnection was expected
         print("Unexpected disconnection.")
     print("Disconnected from MQTT Broker")
 
 def setup_mqtt_client():
+    """
+    Initializes and configures the MQTT client.
+    """
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
@@ -30,7 +47,14 @@ def setup_mqtt_client():
     client.loop_start()
     return client
 
-def publish_weather_data(client, data_file):
+def publish_weather_data(client:mqtt.Client, data_file):
+    """
+    Publishes weather data from a CSV file to the MQTT broker.
+
+    Parameters:
+    client (mqtt.Client): The MQTT client instance for publishing data.
+    data_file (str): Path to the CSV file containing weather data.
+    """
     try:
         data = pd.read_csv(data_file)
         if data.empty:
@@ -69,7 +93,9 @@ def publish_weather_data(client, data_file):
         print(f"An error occurred during publication: {e}")
 
 def main():
-    data.process()
+    """
+    Main function to setup the MQTT client and start publishing weather data.
+    """
     client = setup_mqtt_client()
     try:
         publish_weather_data(client, "data.csv")

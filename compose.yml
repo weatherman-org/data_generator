@@ -43,8 +43,10 @@ services:
       MIGRATION_URL: file://db/migration
 
   data_generator:
-    image: my-python-app:latest
+    image: data-generator:latest
     restart: always
     deploy:
       mode: replicated
       replicas: 1
+    environment:
+      - INTERVAL=5
