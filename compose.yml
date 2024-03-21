@@ -43,7 +43,7 @@ services:
       MIGRATION_URL: file://db/migration
 
   data_generator:
-    image: data-generator:latest
+    image: siva0310/data-generator:latest 
     restart: always
     deploy:
       mode: replicated
